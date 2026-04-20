@@ -57,6 +57,8 @@ src/
    - Go to `Authentication -> Sign-in method`
    - Enable `Anonymous`
 3. Create a **Firestore Database** in production or test mode.
+   - This step is required. If you skip it, room creation will fail because the Cloud Firestore API or default database is not active yet.
+   - In Firebase Console, open `Build -> Firestore Database` and click `Create database`
 4. Add a **Web App** in Firebase and copy the config values into `.env`.
 5. Add Firestore rules that allow authenticated anonymous users to read and write rooms. Example:
 

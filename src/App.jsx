@@ -9,6 +9,7 @@ import {
   subscribeToRoom,
 } from './lib/roomApi';
 import { calculateRoomSummary } from './lib/settlements';
+import { normalizeFirebaseError } from './lib/firebaseErrorMessage';
 import RoomGate from './components/RoomGate';
 import ParticipantsPanel from './components/ParticipantsPanel';
 import ExpensesPanel from './components/ExpensesPanel';
@@ -54,7 +55,7 @@ export default function App() {
           return;
         }
 
-        setError(sessionError.message || 'Unable to initialize Firebase.');
+        setError(normalizeFirebaseError(sessionError, 'Unable to initialize Firebase.'));
         setStatus('Firebase setup needs attention.');
       });
 
@@ -85,7 +86,7 @@ export default function App() {
       },
       (subscribeError) => {
         setRoom(null);
-        setError(subscribeError.message || 'Unable to subscribe to the room.');
+        setError(normalizeFirebaseError(subscribeError, 'Unable to subscribe to the room.'));
       },
     );
 
@@ -113,7 +114,7 @@ export default function App() {
       setStatus(`Created room ${createdRoomCode}`);
       localStorage.setItem(NAME_STORAGE_KEY, nextName);
     } catch (createError) {
-      setError(createError.message || 'Unable to create room.');
+      setError(normalizeFirebaseError(createError, 'Unable to create room.'));
     } finally {
       setBusyAction('');
     }
@@ -140,7 +141,7 @@ export default function App() {
       localStorage.setItem(NAME_STORAGE_KEY, nextName);
       localStorage.setItem(ROOM_STORAGE_KEY, nextRoomCode);
     } catch (joinError) {
-      setError(joinError.message || 'Unable to join that room.');
+      setError(normalizeFirebaseError(joinError, 'Unable to join that room.'));
     } finally {
       setBusyAction('');
     }
@@ -157,7 +158,7 @@ export default function App() {
     try {
       await addParticipantToRoom(roomCode, name);
     } catch (participantError) {
-      setError(participantError.message || 'Unable to add participant.');
+      setError(normalizeFirebaseError(participantError, 'Unable to add participant.'));
     } finally {
       setBusyAction('');
     }
@@ -174,7 +175,7 @@ export default function App() {
     try {
       await removeParticipantFromRoom(roomCode, participantId);
     } catch (removeError) {
-      setError(removeError.message || 'Unable to remove participant.');
+      setError(normalizeFirebaseError(removeError, 'Unable to remove participant.'));
     } finally {
       setBusyAction('');
     }
@@ -191,7 +192,7 @@ export default function App() {
     try {
       await addExpenseToRoom(roomCode, payload);
     } catch (expenseError) {
-      setError(expenseError.message || 'Unable to add expense.');
+      setError(normalizeFirebaseError(expenseError, 'Unable to add expense.'));
     } finally {
       setBusyAction('');
     }
