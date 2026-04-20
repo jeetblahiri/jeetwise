@@ -89,7 +89,7 @@ export default function ExpensesPanel({
     setDescription(expense.description);
     setAmount(String(expense.amount));
     setPaidBy(expense.paidBy);
-    setSplitBetween(expense.splitBetween);
+    setSplitBetween(Array.isArray(expense.splitBetween) ? expense.splitBetween : []);
   };
 
   return (

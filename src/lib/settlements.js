@@ -26,7 +26,7 @@ export function calculateRoomSummary(room) {
   room.expenses.forEach((expense) => {
     const totalCents = toCents(expense.amount);
     const payer = expense.paidBy;
-    const splitBetween = expense.splitBetween || [];
+    const splitBetween = Array.isArray(expense.splitBetween) ? expense.splitBetween : [];
 
     if (splitBetween.length === 0 || !balances.has(payer)) {
       return;

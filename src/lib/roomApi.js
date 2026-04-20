@@ -38,7 +38,8 @@ function normalizeRoom(rawRoom) {
     .map((expense) => ({
       ...expense,
       paidByName: participantById.get(expense.paidBy)?.name || 'Unknown',
-      splitBetweenNames: expense.splitBetween
+      splitBetween: Array.isArray(expense.splitBetween) ? expense.splitBetween : [],
+      splitBetweenNames: (Array.isArray(expense.splitBetween) ? expense.splitBetween : [])
         .map((participantId) => participantById.get(participantId)?.name || 'Unknown')
         .sort((a, b) => a.localeCompare(b)),
       createdLabel: formatTimestamp(expense.createdAt),
@@ -198,7 +199,11 @@ export function subscribeToRoom(roomCode, onRoomChange, onError) {
         return;
       }
 
-      onRoomChange(normalizeRoom(snapshot.data()));
+      try {
+        onRoomChange(normalizeRoom(snapshot.data()));
+      } catch (error) {
+        onError?.(error);
+      }
     },
     (error) => {
       onError?.(error);
@@ -258,7 +263,8 @@ export async function removeParticipantFromRoom(roomCode, participantId) {
     const expenses = room.expenses || [];
     const isReferenced = expenses.some(
       (expense) =>
-        expense.paidBy === participantId || expense.splitBetween.includes(participantId),
+        expense.paidBy === participantId ||
+        (Array.isArray(expense.splitBetween) && expense.splitBetween.includes(participantId)),
     );
 
     if (isReferenced) {
