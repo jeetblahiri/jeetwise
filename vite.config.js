@@ -11,6 +11,9 @@ export default defineConfig(({ mode, command }) => {
     build: {
       rollupOptions: {
         output: {
+          entryFileNames: 'assets/[name].js',
+          chunkFileNames: 'assets/[name].js',
+          assetFileNames: 'assets/[name][extname]',
           manualChunks: {
             react: ['react', 'react-dom'],
             firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],

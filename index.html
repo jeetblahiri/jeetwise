@@ -3,14 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <meta
       name="description"
       content="jeetwise is a real-time Splitwise-like room app for tracking shared expenses."
     />
     <title>jeetwise</title>
+    <style>
+      :root {
+        color: #161622;
+        background:
+          radial-gradient(circle at top left, rgba(248, 177, 132, 0.4), transparent 24%),
+          radial-gradient(circle at top right, rgba(151, 198, 216, 0.45), transparent 24%),
+          linear-gradient(180deg, #f9f4ec 0%, #f7f3eb 100%);
+        font-family: 'IBM Plex Sans', sans-serif;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        color: #161622;
+      }
+
+      #boot-fallback {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .boot-card {
+        width: min(100%, 560px);
+        border: 1px solid rgba(22, 22, 34, 0.1);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 22px 60px rgba(22, 22, 34, 0.15);
+        backdrop-filter: blur(14px);
+        padding: 24px;
+      }
+
+      .boot-eyebrow {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: rgba(22, 22, 34, 0.5);
+      }
+
+      .boot-title {
+        margin: 12px 0 0;
+        font-size: 40px;
+        line-height: 1;
+        font-weight: 700;
+      }
+
+      .boot-copy {
+        margin: 14px 0 0;
+        font-size: 15px;
+        line-height: 1.7;
+        color: rgba(22, 22, 34, 0.7);
+      }
+
+      .boot-note {
+        margin: 18px 0 0;
+        border-radius: 18px;
+        background: rgba(22, 22, 34, 0.05);
+        padding: 14px 16px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: rgba(22, 22, 34, 0.7);
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-fallback">
+        <div class="boot-card">
+          <p class="boot-eyebrow">Launching App</p>
+          <h1 class="boot-title">jeetwise</h1>
+          <p class="boot-copy">
+            Loading your room and Firebase session. If this message stays on screen, refresh once.
+          </p>
+          <div class="boot-note">
+            If you still see a blank page after a refresh, clear the browser cache for this site and
+            reopen the latest deployed version.
+          </div>
+        </div>
+      </div>
+    </div>
+    <noscript>
+      <div id="boot-fallback">
+        <div class="boot-card">
+          <p class="boot-eyebrow">JavaScript Required</p>
+          <h1 class="boot-title">jeetwise</h1>
+          <p class="boot-copy">This app needs JavaScript enabled to run.</p>
+        </div>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
