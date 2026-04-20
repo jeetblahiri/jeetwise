@@ -6,11 +6,19 @@ function defaultSplit(participants) {
   return participants.map((participant) => participant.id);
 }
 
-export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
+export default function ExpensesPanel({
+  room,
+  authUid,
+  busyAction,
+  onAddExpense,
+  onUpdateExpense,
+  onDeleteExpense,
+}) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [paidBy, setPaidBy] = useState('');
   const [splitBetween, setSplitBetween] = useState([]);
+  const [editingExpenseId, setEditingExpenseId] = useState('');
 
   useEffect(() => {
     if (!room || room.participants.length === 0) {
@@ -27,6 +35,21 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
       return filtered.length > 0 ? filtered : defaultSplit(room.participants);
     });
   }, [room]);
+
+  const resetForm = () => {
+    setDescription('');
+    setAmount('');
+    setEditingExpenseId('');
+
+    if (room?.participants?.length) {
+      setPaidBy(room.participants[0].id);
+      setSplitBetween(defaultSplit(room.participants));
+      return;
+    }
+
+    setPaidBy('');
+    setSplitBetween([]);
+  };
 
   const toggleParticipant = (participantId) => {
     setSplitBetween((current) => {
@@ -45,23 +68,35 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
       return;
     }
 
-    await onAddExpense({
+    const payload = {
       description: description.trim(),
       amount: Number(amount),
       paidBy,
       splitBetween,
-    });
+    };
 
-    setDescription('');
-    setAmount('');
-    setSplitBetween(defaultSplit(room.participants));
+    if (editingExpenseId) {
+      await onUpdateExpense(editingExpenseId, payload);
+    } else {
+      await onAddExpense(payload);
+    }
+
+    resetForm();
+  };
+
+  const startEditing = (expense) => {
+    setEditingExpenseId(expense.id);
+    setDescription(expense.description);
+    setAmount(String(expense.amount));
+    setPaidBy(expense.paidBy);
+    setSplitBetween(expense.splitBetween);
   };
 
   return (
     <PanelShell
       eyebrow="Expenses"
-      title="Track every bill in one place"
-      description="Add a description, amount, payer, and who should share it. The split is equal, and balances recalculate instantly for everyone in the room."
+      title="Bills"
+      description="Add a bill, split it equally, and edit only the bills you created."
       accent="moss"
     >
       {!room ? (
@@ -71,6 +106,21 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <form className="grid gap-4" onSubmit={handleSubmit}>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-ink/65">
+                {editingExpenseId ? 'Editing your bill' : 'Add a bill'}
+              </p>
+              {editingExpenseId ? (
+                <button
+                  type="button"
+                  className="text-sm font-semibold text-ink/60"
+                  onClick={resetForm}
+                >
+                  Cancel
+                </button>
+              ) : null}
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2">
                 <span className="text-sm font-medium text-ink/70">Description</span>
@@ -153,13 +203,20 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
               className="h-12 rounded-2xl bg-coral px-5 font-semibold text-white transition hover:bg-coral/90 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={
                 busyAction === 'add-expense' ||
+                busyAction === `update-${editingExpenseId}` ||
                 !description.trim() ||
                 !amount ||
                 !paidBy ||
                 splitBetween.length === 0
               }
             >
-              {busyAction === 'add-expense' ? 'Saving expense...' : 'Add expense'}
+              {editingExpenseId
+                ? busyAction === `update-${editingExpenseId}`
+                  ? 'Updating bill...'
+                  : 'Save changes'
+                : busyAction === 'add-expense'
+                  ? 'Saving bill...'
+                  : 'Add bill'}
             </button>
           </form>
 
@@ -176,7 +233,14 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="font-semibold text-ink">{expense.description}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-ink">{expense.description}</p>
+                        {(expense.createdBy ? expense.createdBy === authUid : expense.paidBy === authUid) ? (
+                          <span className="rounded-full bg-moss/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-moss">
+                            Yours
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="mt-1 text-sm leading-6 text-ink/60">
                         Paid by {expense.paidByName} for {expense.splitBetweenNames.join(', ')}
                       </p>
@@ -188,6 +252,30 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
                   <p className="mt-3 text-xs uppercase tracking-[0.22em] text-ink/40">
                     Added {expense.createdLabel}
                   </p>
+                  {expense.editedLabel ? (
+                    <p className="mt-1 text-xs uppercase tracking-[0.22em] text-ink/35">
+                      Updated {expense.editedLabel}
+                    </p>
+                  ) : null}
+                  {(expense.createdBy ? expense.createdBy === authUid : expense.paidBy === authUid) ? (
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        type="button"
+                        className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink/90"
+                        onClick={() => startEditing(expense)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-full border border-coral/25 px-4 py-2 text-sm font-semibold text-coral transition hover:bg-coral/5 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={busyAction === `delete-${expense.id}`}
+                        onClick={() => onDeleteExpense(expense.id)}
+                      >
+                        {busyAction === `delete-${expense.id}` ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  ) : null}
                 </article>
               ))
             )}

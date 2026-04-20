@@ -4,9 +4,11 @@ import {
   addExpenseToRoom,
   addParticipantToRoom,
   createRoomWithParticipant,
+  deleteExpenseFromRoom,
   joinRoomByCode,
   removeParticipantFromRoom,
   subscribeToRoom,
+  updateExpenseInRoom,
 } from './lib/roomApi';
 import { calculateRoomSummary } from './lib/settlements';
 import { normalizeFirebaseError } from './lib/firebaseErrorMessage';
@@ -194,9 +196,43 @@ export default function App() {
     setError('');
 
     try {
-      await addExpenseToRoom(roomCode, payload);
+      await addExpenseToRoom(roomCode, { ...payload, createdBy: authUid });
     } catch (expenseError) {
       setError(normalizeFirebaseError(expenseError, 'Unable to add expense.'));
+    } finally {
+      setBusyAction('');
+    }
+  };
+
+  const handleUpdateExpense = async (expenseId, payload) => {
+    if (!roomCode) {
+      return;
+    }
+
+    setBusyAction(`update-${expenseId}`);
+    setError('');
+
+    try {
+      await updateExpenseInRoom(roomCode, expenseId, authUid, payload);
+    } catch (expenseError) {
+      setError(normalizeFirebaseError(expenseError, 'Unable to update expense.'));
+    } finally {
+      setBusyAction('');
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId) => {
+    if (!roomCode) {
+      return;
+    }
+
+    setBusyAction(`delete-${expenseId}`);
+    setError('');
+
+    try {
+      await deleteExpenseFromRoom(roomCode, expenseId, authUid);
+    } catch (expenseError) {
+      setError(normalizeFirebaseError(expenseError, 'Unable to delete expense.'));
     } finally {
       setBusyAction('');
     }
@@ -308,8 +344,11 @@ export default function App() {
             <div className={sectionClasses('expenses')}>
               <ExpensesPanel
                 room={room}
+                authUid={authUid}
                 busyAction={busyAction}
                 onAddExpense={handleAddExpense}
+                onUpdateExpense={handleUpdateExpense}
+                onDeleteExpense={handleDeleteExpense}
               />
             </div>
           </div>

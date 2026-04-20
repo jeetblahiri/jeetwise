@@ -42,6 +42,7 @@ function normalizeRoom(rawRoom) {
         .map((participantId) => participantById.get(participantId)?.name || 'Unknown')
         .sort((a, b) => a.localeCompare(b)),
       createdLabel: formatTimestamp(expense.createdAt),
+      editedLabel: expense.editedAt ? formatTimestamp(expense.editedAt) : '',
     }));
 
   return {
@@ -68,6 +69,53 @@ function generateEntityId(prefix = 'id') {
   }
 
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function canEditExpense(expense, authUid) {
+  if (!authUid) {
+    return false;
+  }
+
+  if (expense.createdBy) {
+    return expense.createdBy === authUid;
+  }
+
+  return expense.paidBy === authUid;
+}
+
+function validateExpensePayload(payload, validIds) {
+  const amount = Number(payload.amount);
+
+  if (!payload.description?.trim()) {
+    throw new Error('Expense description is required.');
+  }
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('Expense amount must be greater than zero.');
+  }
+
+  if (!payload.paidBy) {
+    throw new Error('Select who paid for the expense.');
+  }
+
+  if (!validIds.has(payload.paidBy)) {
+    throw new Error('The selected payer is no longer in the room.');
+  }
+
+  const splitBetween = [...new Set(payload.splitBetween || [])].filter((participantId) =>
+    validIds.has(participantId),
+  );
+
+  if (splitBetween.length === 0) {
+    throw new Error('Pick at least one valid participant in the split.');
+  }
+
+  return {
+    description: payload.description.trim().slice(0, 80),
+    amount: Number(amount.toFixed(2)),
+    paidBy: payload.paidBy,
+    splitBetween,
+  };
 }
 
 export async function createRoomWithParticipant({ authUid, displayName }) {
@@ -225,24 +273,6 @@ export async function removeParticipantFromRoom(roomCode, participantId) {
 }
 
 export async function addExpenseToRoom(roomCode, payload) {
-  const amount = Number(payload.amount);
-
-  if (!payload.description?.trim()) {
-    throw new Error('Expense description is required.');
-  }
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error('Expense amount must be greater than zero.');
-  }
-
-  if (!payload.paidBy) {
-    throw new Error('Select who paid for the expense.');
-  }
-
-  if (!payload.splitBetween?.length) {
-    throw new Error('Pick at least one participant in the split.');
-  }
-
   const ref = roomRef(roomCode);
 
   await runTransaction(db, async (transaction) => {
@@ -255,31 +285,86 @@ export async function addExpenseToRoom(roomCode, payload) {
     const room = snapshot.data();
     const participants = room.participants || [];
     const validIds = new Set(participants.map((participant) => participant.id));
-
-    if (!validIds.has(payload.paidBy)) {
-      throw new Error('The selected payer is no longer in the room.');
-    }
-
-    const splitBetween = [...new Set(payload.splitBetween)].filter((participantId) =>
-      validIds.has(participantId),
-    );
-
-    if (splitBetween.length === 0) {
-      throw new Error('No valid participants found for the split.');
-    }
+    const nextExpense = validateExpensePayload(payload, validIds);
 
     const expenses = [...(room.expenses || [])];
     expenses.push({
       id: generateEntityId('expense'),
-      description: payload.description.trim().slice(0, 80),
-      amount: Number(amount.toFixed(2)),
-      paidBy: payload.paidBy,
-      splitBetween,
+      ...nextExpense,
+      createdBy: payload.createdBy || payload.paidBy,
       createdAt: new Date().toISOString(),
     });
 
     transaction.update(ref, {
       expenses,
+      updatedAt: serverTimestamp(),
+    });
+  });
+}
+
+export async function updateExpenseInRoom(roomCode, expenseId, authUid, payload) {
+  const ref = roomRef(roomCode);
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(ref);
+
+    if (!snapshot.exists()) {
+      throw new Error('Room not found.');
+    }
+
+    const room = snapshot.data();
+    const participants = room.participants || [];
+    const validIds = new Set(participants.map((participant) => participant.id));
+    const expenses = [...(room.expenses || [])];
+    const expenseIndex = expenses.findIndex((expense) => expense.id === expenseId);
+
+    if (expenseIndex < 0) {
+      throw new Error('Expense not found.');
+    }
+
+    const existingExpense = expenses[expenseIndex];
+
+    if (!canEditExpense(existingExpense, authUid)) {
+      throw new Error('You can only edit bills that you created.');
+    }
+
+    expenses[expenseIndex] = {
+      ...existingExpense,
+      ...validateExpensePayload(payload, validIds),
+      editedAt: new Date().toISOString(),
+    };
+
+    transaction.update(ref, {
+      expenses,
+      updatedAt: serverTimestamp(),
+    });
+  });
+}
+
+export async function deleteExpenseFromRoom(roomCode, expenseId, authUid) {
+  const ref = roomRef(roomCode);
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(ref);
+
+    if (!snapshot.exists()) {
+      throw new Error('Room not found.');
+    }
+
+    const room = snapshot.data();
+    const expenses = [...(room.expenses || [])];
+    const expense = expenses.find((item) => item.id === expenseId);
+
+    if (!expense) {
+      throw new Error('Expense not found.');
+    }
+
+    if (!canEditExpense(expense, authUid)) {
+      throw new Error('You can only delete bills that you created.');
+    }
+
+    transaction.update(ref, {
+      expenses: expenses.filter((item) => item.id !== expenseId),
       updatedAt: serverTimestamp(),
     });
   });

@@ -6,7 +6,7 @@ export default function SettlementPanel({ room, summary }) {
     <PanelShell
       eyebrow="Settlement Summary"
       title="Who owes whom"
-      description="Balances are derived from every expense and reduced into the smallest practical set of transfers with a greedy settlement algorithm."
+      description="Quick payback suggestions based on the current bills."
       accent="sky"
     >
       {!room ? (

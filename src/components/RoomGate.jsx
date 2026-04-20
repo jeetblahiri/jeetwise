@@ -54,8 +54,8 @@ export default function RoomGate({
   return (
     <PanelShell
       eyebrow="Room Join / Create"
-      title="Spin up a shared room"
-      description="Each room is a single Firestore document keyed by a four-digit code. Join from any device and everyone stays in sync instantly."
+      title="Create or join"
+      description="Use a 4-digit code and start splitting quickly."
       accent="coral"
     >
       <div className="grid gap-4">
@@ -102,8 +102,7 @@ export default function RoomGate({
         </button>
 
         <p className="rounded-2xl bg-ink/5 px-4 py-3 text-sm text-ink/65">
-          No login screen needed. Firebase anonymous auth runs behind the scenes and your chosen
-          name is used as the participant label in the room.
+          No signup needed. Anonymous Firebase auth runs in the background.
         </p>
       </div>
     </PanelShell>
