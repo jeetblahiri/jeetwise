@@ -51,7 +51,7 @@ export default function ParticipantsPanel({
         <div className="grid gap-4">
           <form className="grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={submitParticipant}>
             <input
-              className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 outline-none transition focus:border-peach/70 focus:ring-2 focus:ring-peach/20"
+              className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-peach/70 focus:ring-2 focus:ring-peach/20"
               placeholder="Add a participant"
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -73,7 +73,7 @@ export default function ParticipantsPanel({
               return (
                 <div
                   key={participant.id}
-                  className="flex items-center justify-between gap-3 rounded-[1.5rem] border border-ink/10 bg-white px-4 py-4"
+                  className="flex flex-col items-start gap-3 rounded-[1.5rem] border border-ink/10 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -91,7 +91,7 @@ export default function ParticipantsPanel({
 
                   <button
                     type="button"
-                    className="rounded-full border border-ink/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-coral/35 hover:bg-coral/5 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="w-full rounded-full border border-ink/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-coral/35 hover:bg-coral/5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                     disabled={locked || busyAction === `remove-${participant.id}`}
                     onClick={() => onRemoveParticipant(participant.id)}
                   >

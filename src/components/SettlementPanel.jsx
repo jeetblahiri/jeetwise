@@ -32,7 +32,7 @@ export default function SettlementPanel({ room, summary }) {
                 return (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between rounded-[1.4rem] border border-ink/10 bg-white px-4 py-3"
+                    className="flex flex-col items-start gap-3 rounded-[1.4rem] border border-ink/10 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
                       <p className="font-semibold text-ink">{entry.name}</p>
@@ -53,7 +53,7 @@ export default function SettlementPanel({ room, summary }) {
             )}
           </div>
 
-          <div className="rounded-[1.75rem] bg-ink p-5 text-white">
+          <div className="rounded-[1.5rem] bg-ink p-4 text-white sm:rounded-[1.75rem] sm:p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">
               Suggested transfers
             </p>

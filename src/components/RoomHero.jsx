@@ -13,20 +13,20 @@ export default function RoomHero({ room, status, error, onLeaveRoom }) {
       accent="sky"
     >
       <div className="grid gap-4">
-        <div className="grid gap-4 rounded-[1.75rem] bg-ink p-5 text-white sm:grid-cols-[1fr_auto] sm:items-end">
+        <div className="grid gap-4 rounded-[1.5rem] bg-ink p-4 text-white sm:rounded-[1.75rem] sm:p-5 sm:grid-cols-[1fr_auto] sm:items-end">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60">
               Shareable room code
             </p>
-            <p className="mt-2 font-display text-5xl tracking-[0.28em]">
+            <p className="mt-2 break-all font-display text-4xl tracking-[0.18em] sm:text-5xl sm:tracking-[0.28em]">
               {room ? room.code : '----'}
             </p>
           </div>
           <div className="grid gap-3 text-sm text-white/70 sm:justify-items-end">
-            <p>{status}</p>
+            <p className="max-w-full break-words">{status}</p>
             <button
               type="button"
-              className="rounded-full border border-white/15 px-4 py-2 font-medium text-white transition hover:bg-white/10"
+              className="w-full rounded-full border border-white/15 px-4 py-2 font-medium text-white transition hover:bg-white/10 sm:w-auto"
               onClick={onLeaveRoom}
             >
               Leave room
@@ -41,7 +41,7 @@ export default function RoomHero({ room, status, error, onLeaveRoom }) {
         ) : null}
 
         {room ? (
-          <div className="grid gap-3 rounded-[1.75rem] border border-ink/10 bg-canvas/80 p-4 sm:grid-cols-3">
+          <div className="grid gap-3 rounded-[1.5rem] border border-ink/10 bg-canvas/80 p-4 sm:rounded-[1.75rem] sm:grid-cols-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ink/45">
                 Participants
@@ -58,7 +58,9 @@ export default function RoomHero({ room, status, error, onLeaveRoom }) {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ink/45">
                 Last updated
               </p>
-              <p className="mt-2 text-base font-medium text-ink/80">{room.updatedLabel}</p>
+              <p className="mt-2 text-sm font-medium leading-6 text-ink/80 sm:text-base">
+                {room.updatedLabel}
+              </p>
             </div>
           </div>
         ) : null}

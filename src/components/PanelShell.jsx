@@ -7,7 +7,7 @@ export default function PanelShell({ eyebrow, title, description, children, acce
   }[accent];
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-ink/10 bg-white/80 p-5 shadow-float backdrop-blur sm:p-6">
+    <section className="relative overflow-hidden rounded-[1.6rem] border border-ink/10 bg-white/80 p-4 shadow-float backdrop-blur sm:rounded-[2rem] sm:p-6">
       <div className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b ${accentClass}`} />
       <div className="relative">
         {eyebrow ? (
@@ -17,11 +17,13 @@ export default function PanelShell({ eyebrow, title, description, children, acce
         ) : null}
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-display text-2xl text-ink">{title}</h2>
-            {description ? <p className="mt-2 max-w-xl text-sm text-ink/65">{description}</p> : null}
+            <h2 className="font-display text-xl leading-tight text-ink sm:text-2xl">{title}</h2>
+            {description ? (
+              <p className="mt-2 max-w-xl text-sm leading-6 text-ink/65">{description}</p>
+            ) : null}
           </div>
         </div>
-        <div className="mt-5">{children}</div>
+        <div className="mt-4 sm:mt-5">{children}</div>
       </div>
     </section>
   );

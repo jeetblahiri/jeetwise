@@ -62,7 +62,7 @@ export default function RoomGate({
         <label className="grid gap-2">
           <span className="text-sm font-medium text-ink/70">Your name</span>
           <input
-            className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 outline-none transition focus:border-coral/60 focus:ring-2 focus:ring-coral/20"
+            className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-coral/60 focus:ring-2 focus:ring-coral/20"
             placeholder="Jeet"
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -73,7 +73,7 @@ export default function RoomGate({
           <label className="grid gap-2">
             <span className="text-sm font-medium text-ink/70">Join with room code</span>
             <input
-              className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-lg tracking-[0.32em] outline-none transition placeholder:tracking-normal focus:border-moss/60 focus:ring-2 focus:ring-moss/20"
+              className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base tracking-[0.24em] outline-none transition placeholder:tracking-normal focus:border-moss/60 focus:ring-2 focus:ring-moss/20 sm:text-lg sm:tracking-[0.32em]"
               inputMode="numeric"
               maxLength={4}
               placeholder="1234"

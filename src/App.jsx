@@ -209,22 +209,22 @@ export default function App() {
       <div className="pointer-events-none absolute inset-x-0 top-[-12rem] h-[28rem] rounded-full bg-peach/20 blur-3xl" />
       <div className="pointer-events-none absolute right-[-10rem] top-1/3 h-80 w-80 rounded-full bg-sky/25 blur-3xl" />
 
-      <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <header className="mb-5 flex flex-col gap-4 sm:mb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="mb-2 inline-flex rounded-full border border-ink/10 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-ink/60 shadow-sm backdrop-blur">
+            <p className="mb-2 inline-flex max-w-full rounded-full border border-ink/10 bg-white/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-ink/60 shadow-sm backdrop-blur sm:text-xs sm:tracking-[0.28em]">
               Real-time shared expenses
             </p>
-            <h1 className="font-display text-4xl tracking-tight text-ink sm:text-5xl">
+            <h1 className="font-display text-[2.35rem] leading-none tracking-tight text-ink sm:text-5xl">
               jeetwise
             </h1>
-            <p className="mt-3 max-w-2xl text-sm text-ink/70 sm:text-base">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/70 sm:text-base">
               A lightweight Splitwise-style room app with Firestore sync, anonymous auth,
               and instant settlement math for group trips, dinners, and house expenses.
             </p>
           </div>
 
-          <div className="rounded-3xl border border-ink/10 bg-white/75 px-4 py-3 shadow-float backdrop-blur">
+          <div className="w-full rounded-3xl border border-ink/10 bg-white/75 px-4 py-3 shadow-float backdrop-blur sm:w-auto sm:min-w-[18rem]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ink/50">
               Session
             </p>
@@ -237,7 +237,7 @@ export default function App() {
           </div>
         </header>
 
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_1.9fr]">
+        <div className="grid gap-5 sm:gap-6 xl:grid-cols-[1.1fr_1.9fr]">
           <div className="space-y-6">
             <RoomGate
               authReady={authReady}

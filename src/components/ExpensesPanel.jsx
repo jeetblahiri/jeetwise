@@ -75,7 +75,7 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
               <label className="grid gap-2">
                 <span className="text-sm font-medium text-ink/70">Description</span>
                 <input
-                  className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 outline-none transition focus:border-moss/60 focus:ring-2 focus:ring-moss/20"
+                  className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-moss/60 focus:ring-2 focus:ring-moss/20"
                   placeholder="Dinner at BKC"
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
@@ -85,7 +85,7 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
               <label className="grid gap-2">
                 <span className="text-sm font-medium text-ink/70">Amount</span>
                 <input
-                  className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 outline-none transition focus:border-moss/60 focus:ring-2 focus:ring-moss/20"
+                  className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-moss/60 focus:ring-2 focus:ring-moss/20"
                   inputMode="decimal"
                   min="0"
                   step="0.01"
@@ -100,7 +100,7 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
             <label className="grid gap-2">
               <span className="text-sm font-medium text-ink/70">Paid by</span>
               <select
-                className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 outline-none transition focus:border-moss/60 focus:ring-2 focus:ring-moss/20"
+                className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-moss/60 focus:ring-2 focus:ring-moss/20"
                 value={paidBy}
                 onChange={(event) => setPaidBy(event.target.value)}
               >
@@ -113,11 +113,11 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
             </label>
 
             <div className="grid gap-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm font-medium text-ink/70">Split between</span>
                 <button
                   type="button"
-                  className="text-sm font-semibold text-moss"
+                  className="self-start text-sm font-semibold text-moss"
                   onClick={() => setSplitBetween(defaultSplit(room.participants))}
                 >
                   Select all
@@ -131,7 +131,7 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
                     <button
                       key={participant.id}
                       type="button"
-                      className={`flex items-center justify-between rounded-[1.35rem] border px-4 py-3 text-left transition ${
+                      className={`flex min-h-[3.5rem] items-center justify-between rounded-[1.35rem] border px-4 py-3 text-left transition ${
                         selected
                           ? 'border-moss/40 bg-moss/10 text-ink'
                           : 'border-ink/10 bg-white text-ink/70'
@@ -174,14 +174,14 @@ export default function ExpensesPanel({ room, busyAction, onAddExpense }) {
                   key={expense.id}
                   className="rounded-[1.5rem] border border-ink/10 bg-white px-4 py-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="font-semibold text-ink">{expense.description}</p>
-                      <p className="mt-1 text-sm text-ink/60">
+                      <p className="mt-1 text-sm leading-6 text-ink/60">
                         Paid by {expense.paidByName} for {expense.splitBetweenNames.join(', ')}
                       </p>
                     </div>
-                    <p className="font-display text-2xl text-ink">
+                    <p className="font-display text-xl text-ink sm:text-2xl">
                       {formatCurrency(expense.amount)}
                     </p>
                   </div>
