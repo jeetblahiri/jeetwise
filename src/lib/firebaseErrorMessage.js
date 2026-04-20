@@ -19,7 +19,8 @@ export function normalizeFirebaseError(error, fallbackMessage) {
   ) {
     return (
       'Firestore exists in your app config, but the default database has not been created yet. ' +
-      'Open Firebase Console -> Build -> Firestore Database and create the default database first.'
+      'Creating Realtime Database does not fix this app because jeetwise uses Cloud Firestore. ' +
+      'Open Firebase Console -> Build -> Firestore Database and create the default Firestore database first.'
     );
   }
 
