@@ -10,6 +10,7 @@ import {
 } from './lib/roomApi';
 import { calculateRoomSummary } from './lib/settlements';
 import { normalizeFirebaseError } from './lib/firebaseErrorMessage';
+import { safeGetStorage, safeRemoveStorage, safeSetStorage } from './lib/storage';
 import RoomGate from './components/RoomGate';
 import ParticipantsPanel from './components/ParticipantsPanel';
 import ExpensesPanel from './components/ExpensesPanel';
@@ -22,12 +23,13 @@ const NAME_STORAGE_KEY = 'jeetwise:display-name';
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [authUid, setAuthUid] = useState('');
-  const [roomCode, setRoomCode] = useState(localStorage.getItem(ROOM_STORAGE_KEY) || '');
-  const [displayName, setDisplayName] = useState(localStorage.getItem(NAME_STORAGE_KEY) || '');
+  const [roomCode, setRoomCode] = useState(() => safeGetStorage(ROOM_STORAGE_KEY));
+  const [displayName, setDisplayName] = useState(() => safeGetStorage(NAME_STORAGE_KEY));
   const [room, setRoom] = useState(null);
   const [status, setStatus] = useState('Connecting to Firebase...');
   const [error, setError] = useState('');
   const [busyAction, setBusyAction] = useState('');
+  const [mobileSection, setMobileSection] = useState('room');
 
   useEffect(() => {
     let active = true;
@@ -77,7 +79,7 @@ export default function App() {
           setRoom(snapshot);
           setStatus(`Live in room ${snapshot.code}`);
           setError('');
-          localStorage.setItem(ROOM_STORAGE_KEY, snapshot.code);
+          safeSetStorage(ROOM_STORAGE_KEY, snapshot.code);
           return;
         }
 
@@ -112,7 +114,8 @@ export default function App() {
       setDisplayName(nextName);
       setRoomCode(createdRoomCode);
       setStatus(`Created room ${createdRoomCode}`);
-      localStorage.setItem(NAME_STORAGE_KEY, nextName);
+      safeSetStorage(NAME_STORAGE_KEY, nextName);
+      setMobileSection('people');
     } catch (createError) {
       setError(normalizeFirebaseError(createError, 'Unable to create room.'));
     } finally {
@@ -138,8 +141,9 @@ export default function App() {
       setDisplayName(nextName);
       setRoomCode(nextRoomCode);
       setStatus(`Joined room ${nextRoomCode}`);
-      localStorage.setItem(NAME_STORAGE_KEY, nextName);
-      localStorage.setItem(ROOM_STORAGE_KEY, nextRoomCode);
+      safeSetStorage(NAME_STORAGE_KEY, nextName);
+      safeSetStorage(ROOM_STORAGE_KEY, nextRoomCode);
+      setMobileSection('expenses');
     } catch (joinError) {
       setError(normalizeFirebaseError(joinError, 'Unable to join that room.'));
     } finally {
@@ -202,8 +206,12 @@ export default function App() {
     setRoomCode('');
     setRoom(null);
     setStatus('Left the room.');
-    localStorage.removeItem(ROOM_STORAGE_KEY);
+    safeRemoveStorage(ROOM_STORAGE_KEY);
+    setMobileSection('room');
   };
+
+  const sectionClasses = (sectionName) =>
+    mobileSection === sectionName ? 'block' : 'hidden lg:block';
 
   return (
     <div className="relative overflow-hidden bg-canvas bg-grain">
@@ -238,8 +246,32 @@ export default function App() {
           </div>
         </header>
 
+        {room ? (
+          <nav className="sticky top-3 z-20 mb-5 flex gap-2 overflow-x-auto rounded-full border border-ink/10 bg-white/80 p-2 shadow-float backdrop-blur lg:hidden">
+            {[
+              { id: 'room', label: 'Room' },
+              { id: 'people', label: 'People' },
+              { id: 'expenses', label: 'Expenses' },
+              { id: 'settle', label: 'Settle' },
+            ].map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`min-w-fit rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  mobileSection === item.id
+                    ? 'bg-ink text-white'
+                    : 'bg-canvas text-ink/65'
+                }`}
+                onClick={() => setMobileSection(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        ) : null}
+
         <div className="grid gap-5 sm:gap-6 xl:grid-cols-[1.1fr_1.9fr]">
-          <div className="space-y-6">
+          <div className={`space-y-6 ${sectionClasses('room')}`}>
             <RoomGate
               authReady={authReady}
               busyAction={busyAction}
@@ -259,21 +291,27 @@ export default function App() {
 
           <div className="grid gap-6">
             <section className="grid gap-6 lg:grid-cols-2">
-              <ParticipantsPanel
-                room={room}
-                authUid={authUid}
-                busyAction={busyAction}
-                onAddParticipant={handleAddParticipant}
-                onRemoveParticipant={handleRemoveParticipant}
-              />
-              <SettlementPanel room={room} summary={summary} />
+              <div className={sectionClasses('people')}>
+                <ParticipantsPanel
+                  room={room}
+                  authUid={authUid}
+                  busyAction={busyAction}
+                  onAddParticipant={handleAddParticipant}
+                  onRemoveParticipant={handleRemoveParticipant}
+                />
+              </div>
+              <div className={sectionClasses('settle')}>
+                <SettlementPanel room={room} summary={summary} />
+              </div>
             </section>
 
-            <ExpensesPanel
-              room={room}
-              busyAction={busyAction}
-              onAddExpense={handleAddExpense}
-            />
+            <div className={sectionClasses('expenses')}>
+              <ExpensesPanel
+                room={room}
+                busyAction={busyAction}
+                onAddExpense={handleAddExpense}
+              />
+            </div>
           </div>
         </div>
       </main>

@@ -63,7 +63,11 @@ function generateRoomCode() {
 }
 
 function generateEntityId(prefix = 'id') {
-  return `${prefix}_${crypto.randomUUID()}`;
+  if (globalThis.crypto?.randomUUID) {
+    return `${prefix}_${globalThis.crypto.randomUUID()}`;
+  }
+
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export async function createRoomWithParticipant({ authUid, displayName }) {
