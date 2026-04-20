@@ -3,8 +3,9 @@ import PanelShell from './PanelShell';
 
 export default function ParticipantsPanel({
   room,
-  authUid,
+  currentParticipantId,
   busyAction,
+  isAdmin,
   onAddParticipant,
   onRemoveParticipant,
 }) {
@@ -39,8 +40,12 @@ export default function ParticipantsPanel({
   return (
     <PanelShell
       eyebrow="Participants"
-      title="Manage the people in this room"
-      description="Participants are stored directly on the room document. You can remove someone as long as no expense currently references them."
+      title={isAdmin ? 'Manage members' : 'Room members'}
+      description={
+        isAdmin
+          ? 'As admin, you add and remove the people in this room.'
+          : 'The room admin manages the member list. Choose your name above to continue.'
+      }
       accent="peach"
     >
       {!room ? (
@@ -49,26 +54,29 @@ export default function ParticipantsPanel({
         </p>
       ) : (
         <div className="grid gap-4">
-          <form className="grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={submitParticipant}>
-            <input
-              className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-peach/70 focus:ring-2 focus:ring-peach/20"
-              placeholder="Add a participant"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-            <button
-              type="submit"
-              className="h-12 rounded-2xl bg-ink px-5 font-semibold text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!name.trim() || busyAction === 'add-participant'}
-            >
-              {busyAction === 'add-participant' ? 'Adding...' : 'Add person'}
-            </button>
-          </form>
+          {isAdmin ? (
+            <form className="grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={submitParticipant}>
+              <input
+                className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-peach/70 focus:ring-2 focus:ring-peach/20"
+                placeholder="Add a participant"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+              <button
+                type="submit"
+                className="h-12 rounded-2xl bg-ink px-5 font-semibold text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!name.trim() || busyAction === 'add-participant'}
+              >
+                {busyAction === 'add-participant' ? 'Adding...' : 'Add person'}
+              </button>
+            </form>
+          ) : null}
 
           <div className="grid gap-3">
             {room.participants.map((participant) => {
               const locked = protectedParticipants.has(participant.id);
-              const isCurrentUser = participant.id === authUid;
+              const isCurrentUser = participant.id === currentParticipantId;
+              const isRoomAdmin = participant.id === room.adminUid;
 
               return (
                 <div
@@ -83,29 +91,39 @@ export default function ParticipantsPanel({
                           You
                         </span>
                       ) : null}
+                      {isRoomAdmin ? (
+                        <span className="rounded-full bg-ink/10 px-2 py-1 text-xs font-semibold text-ink">
+                          Admin
+                        </span>
+                      ) : null}
                     </div>
-                    <p className="mt-1 text-xs uppercase tracking-[0.22em] text-ink/45">
-                      ID {participant.id.slice(0, 8)}
-                    </p>
                   </div>
 
-                  <button
-                    type="button"
-                    className="w-full rounded-full border border-ink/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-coral/35 hover:bg-coral/5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
-                    disabled={locked || busyAction === `remove-${participant.id}`}
-                    onClick={() => onRemoveParticipant(participant.id)}
-                  >
-                    {busyAction === `remove-${participant.id}` ? 'Removing...' : 'Remove'}
-                  </button>
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      className="w-full rounded-full border border-ink/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-coral/35 hover:bg-coral/5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                      disabled={
+                        participant.id === room.adminUid ||
+                        locked ||
+                        busyAction === `remove-${participant.id}`
+                      }
+                      onClick={() => onRemoveParticipant(participant.id)}
+                    >
+                      {busyAction === `remove-${participant.id}` ? 'Removing...' : 'Remove'}
+                    </button>
+                  ) : null}
                 </div>
               );
             })}
           </div>
 
-          <p className="rounded-2xl bg-canvas px-4 py-3 text-sm text-ink/60">
-            Removal is disabled once a participant is referenced in an expense so historical
-            calculations remain consistent.
-          </p>
+          {isAdmin ? (
+            <p className="rounded-2xl bg-canvas px-4 py-3 text-sm text-ink/60">
+              Removal is disabled once a participant is referenced in an expense so historical
+              calculations remain consistent.
+            </p>
+          ) : null}
         </div>
       )}
     </PanelShell>

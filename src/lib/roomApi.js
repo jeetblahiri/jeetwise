@@ -48,6 +48,7 @@ function normalizeRoom(rawRoom) {
 
   return {
     code: rawRoom.code,
+    adminUid: rawRoom.adminUid || '',
     participants,
     expenses,
     createdAt: rawRoom.createdAt,
@@ -139,6 +140,7 @@ export async function createRoomWithParticipant({ authUid, displayName }) {
 
         transaction.set(ref, {
           code,
+          adminUid: authUid,
           participants: [participant],
           expenses: [],
           createdAt: serverTimestamp(),
@@ -159,35 +161,13 @@ export async function createRoomWithParticipant({ authUid, displayName }) {
   throw new Error('Unable to generate a unique 4-digit room code. Please try again.');
 }
 
-export async function joinRoomByCode({ authUid, roomCode, displayName }) {
+export async function joinRoomByCode({ roomCode }) {
   const ref = roomRef(roomCode);
   const snapshot = await getDoc(ref);
 
   if (!snapshot.exists()) {
     throw new Error(`Room ${roomCode} does not exist.`);
   }
-
-  await runTransaction(db, async (transaction) => {
-    const roomSnapshot = await transaction.get(ref);
-    const room = roomSnapshot.data();
-    const participants = [...(room.participants || [])];
-    const existingIndex = participants.findIndex((participant) => participant.id === authUid);
-    const nextParticipant = {
-      id: authUid,
-      name: sanitizeParticipantName(displayName),
-    };
-
-    if (existingIndex >= 0) {
-      participants[existingIndex] = nextParticipant;
-    } else {
-      participants.push(nextParticipant);
-    }
-
-    transaction.update(ref, {
-      participants,
-      updatedAt: serverTimestamp(),
-    });
-  });
 }
 
 export function subscribeToRoom(roomCode, onRoomChange, onError) {
@@ -211,7 +191,7 @@ export function subscribeToRoom(roomCode, onRoomChange, onError) {
   );
 }
 
-export async function addParticipantToRoom(roomCode, name) {
+export async function addParticipantToRoom(roomCode, authUid, name) {
   const trimmedName = sanitizeParticipantName(name);
 
   if (!trimmedName) {
@@ -228,6 +208,11 @@ export async function addParticipantToRoom(roomCode, name) {
     }
 
     const room = snapshot.data();
+
+    if (room.adminUid !== authUid) {
+      throw new Error('Only the room admin can add participants.');
+    }
+
     const participants = [...(room.participants || [])];
     const duplicate = participants.some(
       (participant) => participant.name.toLowerCase() === trimmedName.toLowerCase(),
@@ -249,7 +234,7 @@ export async function addParticipantToRoom(roomCode, name) {
   });
 }
 
-export async function removeParticipantFromRoom(roomCode, participantId) {
+export async function removeParticipantFromRoom(roomCode, authUid, participantId) {
   const ref = roomRef(roomCode);
 
   await runTransaction(db, async (transaction) => {
@@ -260,6 +245,11 @@ export async function removeParticipantFromRoom(roomCode, participantId) {
     }
 
     const room = snapshot.data();
+
+    if (room.adminUid !== authUid) {
+      throw new Error('Only the room admin can remove participants.');
+    }
+
     const expenses = room.expenses || [];
     const isReferenced = expenses.some(
       (expense) =>

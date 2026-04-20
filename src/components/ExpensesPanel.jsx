@@ -8,7 +8,7 @@ function defaultSplit(participants) {
 
 export default function ExpensesPanel({
   room,
-  authUid,
+  currentParticipantId,
   busyAction,
   onAddExpense,
   onUpdateExpense,
@@ -102,6 +102,10 @@ export default function ExpensesPanel({
       {!room ? (
         <p className="rounded-2xl bg-ink/5 px-4 py-3 text-sm text-ink/60">
           Join a room before adding expenses.
+        </p>
+      ) : !currentParticipantId ? (
+        <p className="rounded-2xl bg-ink/5 px-4 py-3 text-sm text-ink/60">
+          Choose your name in the room first, then you can add or edit your own bills.
         </p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -235,7 +239,9 @@ export default function ExpensesPanel({
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-semibold text-ink">{expense.description}</p>
-                        {(expense.createdBy ? expense.createdBy === authUid : expense.paidBy === authUid) ? (
+                        {(expense.createdBy
+                          ? expense.createdBy === currentParticipantId
+                          : expense.paidBy === currentParticipantId) ? (
                           <span className="rounded-full bg-moss/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-moss">
                             Yours
                           </span>
@@ -257,7 +263,9 @@ export default function ExpensesPanel({
                       Updated {expense.editedLabel}
                     </p>
                   ) : null}
-                  {(expense.createdBy ? expense.createdBy === authUid : expense.paidBy === authUid) ? (
+                  {(expense.createdBy
+                    ? expense.createdBy === currentParticipantId
+                    : expense.paidBy === currentParticipantId) ? (
                     <div className="mt-4 flex gap-2">
                       <button
                         type="button"

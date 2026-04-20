@@ -13,6 +13,7 @@ import {
 import { calculateRoomSummary } from './lib/settlements';
 import { normalizeFirebaseError } from './lib/firebaseErrorMessage';
 import { safeGetStorage, safeRemoveStorage, safeSetStorage } from './lib/storage';
+import IdentityPanel from './components/IdentityPanel';
 import RoomGate from './components/RoomGate';
 import ParticipantsPanel from './components/ParticipantsPanel';
 import ExpensesPanel from './components/ExpensesPanel';
@@ -21,12 +22,14 @@ import RoomHero from './components/RoomHero';
 
 const ROOM_STORAGE_KEY = 'jeetwise:last-room-code';
 const NAME_STORAGE_KEY = 'jeetwise:display-name';
+const participantStorageKey = (roomCode) => `jeetwise:participant:${roomCode}`;
 
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [authUid, setAuthUid] = useState('');
   const [roomCode, setRoomCode] = useState(() => safeGetStorage(ROOM_STORAGE_KEY));
   const [displayName, setDisplayName] = useState(() => safeGetStorage(NAME_STORAGE_KEY));
+  const [currentParticipantId, setCurrentParticipantId] = useState('');
   const [room, setRoom] = useState(null);
   const [status, setStatus] = useState('Connecting to Firebase...');
   const [error, setError] = useState('');
@@ -97,7 +100,47 @@ export default function App() {
     return unsubscribe;
   }, [authReady, roomCode]);
 
+  useEffect(() => {
+    if (!roomCode) {
+      setCurrentParticipantId('');
+      return;
+    }
+
+    const storedParticipantId = safeGetStorage(participantStorageKey(roomCode));
+
+    if (storedParticipantId) {
+      setCurrentParticipantId(storedParticipantId);
+    }
+  }, [roomCode]);
+
+  useEffect(() => {
+    if (!room) {
+      return;
+    }
+
+    const hasParticipant = room.participants.some(
+      (participant) => participant.id === currentParticipantId,
+    );
+
+    if (room.adminUid === authUid && room.participants.some((participant) => participant.id === authUid)) {
+      if (currentParticipantId !== authUid) {
+        setCurrentParticipantId(authUid);
+        safeSetStorage(participantStorageKey(room.code), authUid);
+      }
+      return;
+    }
+
+    if (hasParticipant) {
+      safeSetStorage(participantStorageKey(room.code), currentParticipantId);
+      return;
+    }
+
+    setCurrentParticipantId('');
+    safeRemoveStorage(participantStorageKey(room.code));
+  }, [authUid, currentParticipantId, room]);
+
   const summary = useMemo(() => calculateRoomSummary(room), [room]);
+  const isAdmin = Boolean(room && room.adminUid === authUid);
 
   const handleCreateRoom = async (nextName) => {
     if (!authUid) {
@@ -117,6 +160,8 @@ export default function App() {
       setRoomCode(createdRoomCode);
       setStatus(`Created room ${createdRoomCode}`);
       safeSetStorage(NAME_STORAGE_KEY, nextName);
+      setCurrentParticipantId(authUid);
+      safeSetStorage(participantStorageKey(createdRoomCode), authUid);
       setMobileSection('people');
     } catch (createError) {
       setError(normalizeFirebaseError(createError, 'Unable to create room.'));
@@ -125,7 +170,7 @@ export default function App() {
     }
   };
 
-  const handleJoinRoom = async ({ nextRoomCode, nextName }) => {
+  const handleJoinRoom = async ({ nextRoomCode }) => {
     if (!authUid) {
       return;
     }
@@ -135,17 +180,14 @@ export default function App() {
 
     try {
       await joinRoomByCode({
-        authUid,
         roomCode: nextRoomCode,
-        displayName: nextName,
       });
 
-      setDisplayName(nextName);
       setRoomCode(nextRoomCode);
       setStatus(`Joined room ${nextRoomCode}`);
-      safeSetStorage(NAME_STORAGE_KEY, nextName);
       safeSetStorage(ROOM_STORAGE_KEY, nextRoomCode);
-      setMobileSection('expenses');
+      setCurrentParticipantId('');
+      setMobileSection('people');
     } catch (joinError) {
       setError(normalizeFirebaseError(joinError, 'Unable to join that room.'));
     } finally {
@@ -154,7 +196,7 @@ export default function App() {
   };
 
   const handleAddParticipant = async (name) => {
-    if (!roomCode) {
+    if (!roomCode || !authUid) {
       return;
     }
 
@@ -162,7 +204,7 @@ export default function App() {
     setError('');
 
     try {
-      await addParticipantToRoom(roomCode, name);
+      await addParticipantToRoom(roomCode, authUid, name);
     } catch (participantError) {
       setError(normalizeFirebaseError(participantError, 'Unable to add participant.'));
     } finally {
@@ -171,7 +213,7 @@ export default function App() {
   };
 
   const handleRemoveParticipant = async (participantId) => {
-    if (!roomCode) {
+    if (!roomCode || !authUid) {
       return;
     }
 
@@ -179,7 +221,7 @@ export default function App() {
     setError('');
 
     try {
-      await removeParticipantFromRoom(roomCode, participantId);
+      await removeParticipantFromRoom(roomCode, authUid, participantId);
     } catch (removeError) {
       setError(normalizeFirebaseError(removeError, 'Unable to remove participant.'));
     } finally {
@@ -188,7 +230,7 @@ export default function App() {
   };
 
   const handleAddExpense = async (payload) => {
-    if (!roomCode) {
+    if (!roomCode || !currentParticipantId) {
       return;
     }
 
@@ -196,7 +238,7 @@ export default function App() {
     setError('');
 
     try {
-      await addExpenseToRoom(roomCode, { ...payload, createdBy: authUid });
+      await addExpenseToRoom(roomCode, { ...payload, createdBy: currentParticipantId });
     } catch (expenseError) {
       setError(normalizeFirebaseError(expenseError, 'Unable to add expense.'));
     } finally {
@@ -205,7 +247,7 @@ export default function App() {
   };
 
   const handleUpdateExpense = async (expenseId, payload) => {
-    if (!roomCode) {
+    if (!roomCode || !currentParticipantId) {
       return;
     }
 
@@ -213,7 +255,7 @@ export default function App() {
     setError('');
 
     try {
-      await updateExpenseInRoom(roomCode, expenseId, authUid, payload);
+      await updateExpenseInRoom(roomCode, expenseId, currentParticipantId, payload);
     } catch (expenseError) {
       setError(normalizeFirebaseError(expenseError, 'Unable to update expense.'));
     } finally {
@@ -222,7 +264,7 @@ export default function App() {
   };
 
   const handleDeleteExpense = async (expenseId) => {
-    if (!roomCode) {
+    if (!roomCode || !currentParticipantId) {
       return;
     }
 
@@ -230,7 +272,7 @@ export default function App() {
     setError('');
 
     try {
-      await deleteExpenseFromRoom(roomCode, expenseId, authUid);
+      await deleteExpenseFromRoom(roomCode, expenseId, currentParticipantId);
     } catch (expenseError) {
       setError(normalizeFirebaseError(expenseError, 'Unable to delete expense.'));
     } finally {
@@ -239,11 +281,26 @@ export default function App() {
   };
 
   const handleLeaveRoom = () => {
+    if (roomCode) {
+      safeRemoveStorage(participantStorageKey(roomCode));
+    }
+
     setRoomCode('');
     setRoom(null);
+    setCurrentParticipantId('');
     setStatus('Left the room.');
     safeRemoveStorage(ROOM_STORAGE_KEY);
     setMobileSection('room');
+  };
+
+  const handleSelectParticipant = (participantId) => {
+    setCurrentParticipantId(participantId);
+
+    if (roomCode) {
+      safeSetStorage(participantStorageKey(roomCode), participantId);
+    }
+
+    setMobileSection('expenses');
   };
 
   const sectionClasses = (sectionName) =>
@@ -319,10 +376,19 @@ export default function App() {
 
             <RoomHero
               room={room}
+              currentParticipantId={currentParticipantId}
               status={status}
               error={error}
+              isAdmin={isAdmin}
               onLeaveRoom={handleLeaveRoom}
             />
+
+            {room && !currentParticipantId ? (
+              <IdentityPanel
+                room={room}
+                onSelectParticipant={handleSelectParticipant}
+              />
+            ) : null}
           </div>
 
           <div className="grid gap-6">
@@ -330,8 +396,9 @@ export default function App() {
               <div className={sectionClasses('people')}>
                 <ParticipantsPanel
                   room={room}
-                  authUid={authUid}
+                  currentParticipantId={currentParticipantId}
                   busyAction={busyAction}
+                  isAdmin={isAdmin}
                   onAddParticipant={handleAddParticipant}
                   onRemoveParticipant={handleRemoveParticipant}
                 />
@@ -344,7 +411,7 @@ export default function App() {
             <div className={sectionClasses('expenses')}>
               <ExpensesPanel
                 room={room}
-                authUid={authUid}
+                currentParticipantId={currentParticipantId}
                 busyAction={busyAction}
                 onAddExpense={handleAddExpense}
                 onUpdateExpense={handleUpdateExpense}

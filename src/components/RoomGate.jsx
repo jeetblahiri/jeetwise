@@ -38,15 +38,13 @@ export default function RoomGate({
   const handleJoin = async (event) => {
     event.preventDefault();
 
-    const trimmedName = name.trim();
     const normalizedCode = normalizeCode(joinCode);
 
-    if (!trimmedName || normalizedCode.length !== 4) {
+    if (normalizedCode.length !== 4) {
       return;
     }
 
     await onJoinRoom({
-      nextName: trimmedName,
       nextRoomCode: normalizedCode,
     });
   };
@@ -59,19 +57,32 @@ export default function RoomGate({
       accent="coral"
     >
       <div className="grid gap-4">
-        <label className="grid gap-2">
-          <span className="text-sm font-medium text-ink/70">Your name</span>
-          <input
-            className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-coral/60 focus:ring-2 focus:ring-coral/20"
-            placeholder="Jeet"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </label>
-
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+        <div className="grid gap-3 rounded-[1.5rem] border border-ink/10 bg-white/75 p-4">
+          <p className="text-sm font-semibold text-ink">Create a room</p>
           <label className="grid gap-2">
-            <span className="text-sm font-medium text-ink/70">Join with room code</span>
+            <span className="text-sm font-medium text-ink/70">Admin name</span>
+            <input
+              className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base outline-none transition focus:border-coral/60 focus:ring-2 focus:ring-coral/20"
+              placeholder="Jeet"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+
+          <button
+            type="button"
+            className="h-12 rounded-2xl border border-ink/10 bg-white px-5 font-semibold text-ink transition hover:translate-y-[-1px] hover:border-coral/40 hover:bg-coral/5 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!authReady || isBusy || !name.trim()}
+            onClick={handleCreate}
+          >
+            {busyAction === 'create-room' ? 'Creating room...' : 'Create a new room'}
+          </button>
+        </div>
+
+        <div className="grid gap-3 rounded-[1.5rem] border border-ink/10 bg-white/75 p-4">
+          <p className="text-sm font-semibold text-ink">Join an existing room</p>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-ink/70">Room code</span>
             <input
               className="h-12 rounded-2xl border border-ink/10 bg-canvas px-4 text-base tracking-[0.24em] outline-none transition placeholder:tracking-normal focus:border-moss/60 focus:ring-2 focus:ring-moss/20 sm:text-lg sm:tracking-[0.32em]"
               inputMode="numeric"
@@ -84,25 +95,17 @@ export default function RoomGate({
 
           <button
             type="button"
-            className="mt-auto h-12 rounded-2xl bg-moss px-5 font-semibold text-white transition hover:translate-y-[-1px] hover:bg-moss/90 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!authReady || isBusy || !name.trim() || normalizeCode(joinCode).length !== 4}
+            className="h-12 rounded-2xl bg-moss px-5 font-semibold text-white transition hover:translate-y-[-1px] hover:bg-moss/90 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!authReady || isBusy || normalizeCode(joinCode).length !== 4}
             onClick={handleJoin}
           >
-            {busyAction === 'join-room' ? 'Joining...' : 'Join room'}
+            {busyAction === 'join-room' ? 'Joining...' : 'Join with code'}
           </button>
         </div>
 
-        <button
-          type="button"
-          className="h-12 rounded-2xl border border-ink/10 bg-white px-5 font-semibold text-ink transition hover:translate-y-[-1px] hover:border-coral/40 hover:bg-coral/5 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={!authReady || isBusy || !name.trim()}
-          onClick={handleCreate}
-        >
-          {busyAction === 'create-room' ? 'Creating room...' : 'Create a new room'}
-        </button>
-
         <p className="rounded-2xl bg-ink/5 px-4 py-3 text-sm text-ink/65">
-          No signup needed. Anonymous Firebase auth runs in the background.
+          The creator becomes admin and adds members. Everyone else joins with the code and picks
+          their name from the room.
         </p>
       </div>
     </PanelShell>
